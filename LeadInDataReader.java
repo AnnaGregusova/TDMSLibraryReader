@@ -1,15 +1,14 @@
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Objects;
 
 public class LeadInDataReader extends DataReader {
-    private long currentSegmentOffset; // nevim jak prijdu na tohle
+    private long currentSegmentOffset;
     private final String expectedTag = "TDSm";
     private final int tagOffset = 0;
     private final int maskOffset = 4;
     private final int versionOffset = 8;
     private final int nextSegmentOffset = 12;
-    private final int nextRawDataOffset = 20;
+    private static final int RawDataOffset = 20;
 
 
     public LeadInDataReader(RandomAccessFile file, long segmentOffset){
@@ -17,6 +16,8 @@ public class LeadInDataReader extends DataReader {
         this.currentSegmentOffset = segmentOffset;
 
     }
+
+
 
     public boolean isValidTag() throws IOException {
         return getTag().equals(expectedTag);
@@ -37,7 +38,7 @@ public class LeadInDataReader extends DataReader {
     }
 
     public long getRawData() throws IOException {
-        return readInt64(nextRawDataOffset);
+        return readInt64(RawDataOffset);
     }
     public LeadInData createLeadInData() throws IOException {
         return new LeadInData(getTag(), getMask(), getVersion(), getNextSegment(), getRawData());

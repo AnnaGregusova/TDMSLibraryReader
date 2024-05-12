@@ -26,7 +26,7 @@ public class TDMSGroup {
         for (TDMSChannel channel : channels){ //var
             for (int i = 0; i < channels.size(); i++){
                 if ( channel.getName().equals(name)){
-                    System.out.println(channel.getName());
+                    //System.out.println(channel.getName());
                     //System.out.println(channel.getProperties());
                     return channel;
                 }

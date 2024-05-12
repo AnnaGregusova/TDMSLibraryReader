@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 // abstract class
 public class DataReader {
-    private RandomAccessFile file;
+    RandomAccessFile file;
     FileChannel channel;
     public int readInt32(int offset) throws IOException {
         file.seek(offset);
@@ -66,11 +66,11 @@ public class DataReader {
             String hex = String.format("%02X", b);
             int decimal = b & 0xFF;
             //System.out.println("Hex: " + hex + ", Decimal: " + decimal);
-            System.out.print(hex);
-            
+            //System.out.print(hex);
+
         }
-        System.out.println();
-        
+        //System.out.println();
+
 
         ArrayList<Byte> byteArrayList = new ArrayList<>();
 
@@ -83,6 +83,16 @@ public class DataReader {
             System.out.println("Hex: " + hex + ", Decimal: " + decimal);
         }
         return bytes;
+    }
+    public void printBytes(byte [] bytes){
+        for (byte b : bytes) {
+            String hex = String.format("%02X", b);
+            int decimal = b & 0xFF;
+            //System.out.println("Hex: " + hex + ", Decimal: " + decimal);
+            System.out.print(hex);
+
+        }
+        //System.out.println();
     }
 
     public DataReader(RandomAccessFile file){

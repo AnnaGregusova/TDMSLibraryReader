@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -43,9 +42,9 @@ public class TDMSFile {
 
     private void readSegments(long segmentOffset, long fileSize) throws IOException {
         int leadInDataSizeInBytes = 28;
-        System.out.println("Segment offset: " + segmentOffset);
+        /*System.out.println("Segment offset: " + segmentOffset);
         System.out.println("file size: " + fileSize);
-        System.out.println("Segment offset  + leadIndata: " + (segmentOffset + leadInDataSizeInBytes));
+        System.out.println("Segment offset  + leadIndata: " + (segmentOffset + leadInDataSizeInBytes));*/
         if (segmentOffset + leadInDataSizeInBytes < fileSize) {
             TDMSSegment segment = readSegment(segmentOffset);
             segmentOffset += segment.getLeadInData().getSegmentOffset();
@@ -60,7 +59,7 @@ public class TDMSFile {
         LeadInDataReader leadInDataReader = new LeadInDataReader(file, segmentOffset);
         int leadInDataByteCount = 28;
         MetaDataReader metaDataReader = new MetaDataReader(file, segmentOffset + leadInDataByteCount);
-        //leadInDataReader.readBytes(1656, 0);
+        //leadInDataReader.readBytes(40, 248000);
 
         if (leadInDataReader.isValidTag()) {
             LeadInData leadInData = leadInDataReader.createLeadInData();
@@ -77,8 +76,8 @@ public class TDMSFile {
 
         for (TDMSSegment segment : segments){ //var
             MetaData metaData = segment.getMetaData();
-            tdmsFileInfo = metaData.getTdmsFileInfo();
-            }
+            tdmsFileInfo = metaData.getTDMSFileProperties();
+        }
         return tdmsFileInfo;
     }
     public TDMSGroup getGroup(String name){

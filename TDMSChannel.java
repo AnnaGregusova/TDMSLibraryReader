@@ -1,18 +1,23 @@
 import java.util.ArrayList;
 
 public class TDMSChannel{
-    //private ArrayList<RawData> rawData;
+
     private String name;
     private ArrayList<TDMSProperty> properties;
+    private ArrayList<Object> rawData;
 
-    public TDMSChannel(String name, ArrayList<TDMSProperty> properties){//, ArrayList<RawData> rawData){
+
+
+    public TDMSChannel(String name, ArrayList<TDMSProperty> properties, ArrayList<Object> rawData){
         this.name = name;
         this.properties = properties;
-        //this.rawData = rawData;
+        this.rawData = rawData;
     }
 
     public String getName() {return name;}
     public ArrayList<TDMSProperty> getProperties() {return properties;}
+
+    public ArrayList<Object> getRawData() {return rawData;}
 
     public Object getPropertyValue(String name) {
 
@@ -33,8 +38,6 @@ public class TDMSChannel{
                 "name= " + name + ' ' +
                 '}';
     }
-    /*public ArrayList<RawData> getRawData(){
 
-        return rawData;
-    }*/
+
 }

@@ -4,7 +4,7 @@ public class LeadInData{
     private int mask;
     private int version;
     private long segmentOffset;
-    private long rawDataOffset;
+    public static long rawDataOffset = 1656;
 
     public LeadInData(String tag, int mask, int version, long segmentOffset, long rawDataOffset){
 

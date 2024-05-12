@@ -13,6 +13,10 @@ public class MetaDataReader extends DataReader {
     ArrayList<TDMSProperty> tdmsFileInfo = new ArrayList<>();
     private int numberOfPropertiesOffset = 0;
     private int chunkSize = 0;
+    boolean FirstCall = true;
+    int intRawDataIndex;
+
+
 
     public MetaDataReader(RandomAccessFile file, long metaDataOffset) throws IOException {
 
@@ -45,7 +49,7 @@ public class MetaDataReader extends DataReader {
 
         if (isFirstCallToGetGroups) {
             numberOfObjects = getNumberOfObjects(); // This line runs only on the first call
-            System.out.println("Number of objects: " + numberOfObjects);
+            //System.out.println("Number of objects: " + numberOfObjects);
             isFirstCallToGetGroups = false; // Set flag to false after first call
         }
 
@@ -68,12 +72,12 @@ public class MetaDataReader extends DataReader {
 
             TDMSGroup tdmsFileGroup = new TDMSGroup(name, properties, channels);
             tdmsFileInfo = tdmsFileGroup.getProperties();
-           
+
         }
         else{
             groups.add(new TDMSGroup(name, properties, channels));
         }
-        
+
         return groups;
     }
     private void processObjects(ArrayList<TDMSChannel> channels) throws IOException {
@@ -82,7 +86,7 @@ public class MetaDataReader extends DataReader {
             if (isGroup(currentOffset)) {
                 getGroups();
             } else {
-                TDMSChannel tdmsChannel = getChannel(); 
+                TDMSChannel tdmsChannel = getChannel();
                 channels.add(tdmsChannel);
             }
             processObjects(channels); // Recursive call
@@ -112,6 +116,7 @@ public class MetaDataReader extends DataReader {
     public int hasRawData() throws IOException{
 
         int hasRawData = readInt32(currentOffset);
+        //readBytes(currentOffset, 8);
         currentOffset += 4;
         return hasRawData;
 
@@ -131,10 +136,10 @@ public class MetaDataReader extends DataReader {
             String propertyName = readString(currentOffset, lengthOfPropertyName);
             currentOffset += lengthOfPropertyName;
             PropertyDataTypeEnum propertyDataType = findDataTypeByValue(currentOffset);
-            
+
             Object propertyValue;
             Object dataType;
-            
+
 
             switch (propertyDataType) {
                 case TDS_TYPE_I8:
@@ -151,7 +156,7 @@ public class MetaDataReader extends DataReader {
                 case TDS_TYPE_FIXED_POINT:
                 case TDS_TYPE_DOUBLE_FLOAT:
                 case TDS_TYPE_EXTENDED_FLOAT_WITH_UNIT:
-                case TDS_TYPE_TIMESTAMP: 
+                case TDS_TYPE_TIMESTAMP:
                     currentOffset += propertyDataType.getSize();
                     propertyValue = propertyDataType.name();
                     //System.out.println("Property value: " + propertyValue);
@@ -161,13 +166,13 @@ public class MetaDataReader extends DataReader {
                     propertyValue = propertyDataType.name();
                     //System.out.println("Property value: " + propertyValue);
                     break;
-                case TDS_TYPE_STRING:                
+                case TDS_TYPE_STRING:
                     int lengthOfPropertyValue = readInt32(currentOffset);
                     currentOffset += propertyDataType.getSize();
                     propertyValue = readString(currentOffset, lengthOfPropertyValue);
-                    currentOffset += lengthOfPropertyValue;                    
+                    currentOffset += lengthOfPropertyValue;
                     //System.out.println("Property value: " + propertyValue);
-                    break;                   
+                    break;
                 default:
                     propertyValue = readInt32(numberOfPropertiesOffset + 16 + lengthOfPropertyName);
                     currentOffset += 4;
@@ -214,22 +219,22 @@ public class MetaDataReader extends DataReader {
         TDS_TYPE_BOOLEAN(33, 4),                   // 0x21 in decimal
         TDS_TYPE_TIMESTAMP(68, 16),                // 0x44 in decimal
         TDS_TYPE_FIXED_POINT(79, 4),               // 0x4F in decimal
-        TDS_TYPE_COMPLEX_SINGLE_FLOAT(0x08000C, 8),  
+        TDS_TYPE_COMPLEX_SINGLE_FLOAT(0x08000C, 8),
         TDS_TYPE_COMPLEX_DOUBLE_FLOAT(0x10000D, 16),
-        TDS_TYPE_DAQMX_RAW_DATA(0xFFFFFFFF, 4);   
-    
+        TDS_TYPE_DAQMX_RAW_DATA(0xFFFFFFFF, 4);
+
         private final int value;
         private final int size;
-    
+
         PropertyDataTypeEnum(int value, int size) {
             this.value = value;
             this.size = size;
         }
-    
+
         public int getValue() {
             return this.value;
         }
-    
+
         public int getSize() {
             return this.size;
         }
@@ -240,47 +245,108 @@ public class MetaDataReader extends DataReader {
         int slashCount = nextObjectName.length() - nextObjectName.replace("/", "").length();
         return slashCount < 2; // If there are fewer than 2 slashes, it's a group
     }
+
     public TDMSChannel getChannel() throws IOException {
+
         numberOfObjects--;
         ArrayList<TDMSProperty> properties;
+        ArrayList<Object> rawData;
         int nextObjectPathLength = readInt32(currentOffset);
         currentOffset += 4;
         String channelName = readString(currentOffset, nextObjectPathLength);
         currentOffset += nextObjectPathLength;
+
         int lengthOfIndexInformation = readInt32(currentOffset);
+
         currentOffset += 4;
         int dataTypeOfRawData = readInt32(currentOffset);
+        byte [] raws = new byte[4];
+        raws = readBytes(currentOffset,4);
+        //System.out.println("Read data type: ");
+        //printBytes(raws);
         currentOffset += 4;
         int dimension = readInt32(currentOffset);
         currentOffset += 4;
         //readBytes(currentOffset, 8);
         long numberOfRawDataValues = readInt64(currentOffset);
-        System.out.println("NUMBER OF RAW DATA VALUES" + numberOfRawDataValues);
+        ///System.out.println("NUMBER OF RAW DATA VALUES" + numberOfRawDataValues);
         currentOffset += 8;
         int rawDataSize = dataTypeOfRawData * (int) numberOfRawDataValues;
 
 
         int numberOfProperties = readInt32(currentOffset);
         /*System.out.println("CHANNEL NAME: " + channelName);
-        //System.out.println("lengthOfIndexInformation: " + lengthOfIndexInformation);
+        System.out.println("lengthOfIndexInformation: " + lengthOfIndexInformation);
         System.out.println("dataTypeOfRawData: " + dataTypeOfRawData);
-        //System.out.println("dimension: " + dimension);
-       
+        System.out.println("dimension: " + dimension);
         System.out.println("numberOfProperties: " + numberOfProperties);
-        System.out.println("Raw data Size: " + rawDataSize );*/
-        //System.out.println("numberOfRawDataValues: " + numberOfRawDataValues);
-
+        System.out.println("Raw data Size: " + rawDataSize );
+        //System.out.println("numberOfRawDataValues: " + numberOfRawDataValues);*/
+        RawDataReader rawDataReader = new RawDataReader(this.file);
         if (numberOfProperties != 0) {
 
             properties = getProperties();
-        } else {
+        }
+        else {
 
             properties = null;
             currentOffset += 4;
         }
-        TDMSChannel tdmsChannel = new TDMSChannel(channelName, properties);
+
+
+        if (FirstCall){
+            long rawDataOffset = LeadInData.rawDataOffset + 28;
+            intRawDataIndex = (int)rawDataOffset;
+            //System.out.println("Raw data index: " + intRawDataIndex);
+            rawData = rawDataReader.getRawData(dataTypeOfRawData, numberOfRawDataValues, intRawDataIndex);
+            int size;
+            if (dataTypeOfRawData == 68){ size = 16;}
+            else {size = 8;}
+            int intRawDataOffset = (int)rawDataOffset;
+            long rawDataIndex = numberOfRawDataValues*size;
+            intRawDataIndex += (int)rawDataIndex;
+            FirstCall = false;
+        }
+        else{
+
+            //System.out.println("Raw data index: " + intRawDataIndex);
+            rawData = rawDataReader.getRawData(dataTypeOfRawData, numberOfRawDataValues, intRawDataIndex);
+            int size;
+            long rawDataOffset = LeadInData.rawDataOffset + 28;
+            int intRawDataOffset = (int)rawDataOffset;
+            if (dataTypeOfRawData == 68){ size = 16;}
+            else{size = 8;}
+            intRawDataIndex += numberOfRawDataValues*size;
+
+        }
+        /*byte[] raw = new byte[16];
+        raw = readBytes(rawDataIndex, 16);
+        printBytes(raw);*/
+
+
+        TDMSChannel tdmsChannel = new TDMSChannel(channelName, properties, rawData);
         //System.out.println("Current offset: " + currentOffset );
-        //System.out.println("Chunk: "+ chunkSize+rawDataSize);
         return tdmsChannel;
     }
+    private int getRawDataIndex(long numberOfRawDataValues, int dataTypeOfRawData){
+
+        if (FirstCall){
+            long rawDataOffset = LeadInData.rawDataOffset + 28;
+            intRawDataIndex = (int)rawDataOffset;
+            FirstCall = false;
+        }
+        else{
+            int size;
+            long rawDataOffset = LeadInData.rawDataOffset + 28;
+            int intRawDataOffset = (int)rawDataOffset;
+            if (dataTypeOfRawData == 68){ size = 16;}
+            else{size = 8;}
+            long rawDataIndex = intRawDataOffset + numberOfRawDataValues*size;
+            intRawDataIndex += (int)rawDataIndex;
+
+        }
+        return intRawDataIndex;
+    }
+
 }
+
